@@ -8,7 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
-        /* General Styles */
+        
         body {
             font-family: 'Poppins', sans-serif;
             margin: 0;
@@ -189,7 +189,7 @@
     </footer>
 
     <script>
-        const apiKey = 'ee15a32235604254345f2db966a34d38'; // Replace with your OpenWeatherMap API key
+        const apiKey = 'ee15a32235604254345f2db966a34d38'; 
         let map;
 
         // Initialize the map
@@ -216,10 +216,10 @@
             document.getElementById('weatherIcon').src = `http://openweathermap.org/img/wn/${data.weather[0].icon}.png`;
             weatherResult.style.display = 'block';
 
-            // Update dynamic background
+            
             setDynamicBackground(data.weather[0].main.toLowerCase());
 
-            // Update the map
+            
             updateMap(data.coord.lat, data.coord.lon);
         }
 
@@ -288,10 +288,10 @@
             }
         }
 
-        // Auto-refresh weather data every 5 minutes
+        
         setInterval(getWeather, 300000);
 
-        // Initialize map on page load
+        
         window.onload = initMap;
     </script>
 </body>
