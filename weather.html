@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Weather App</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        /* General Styles */
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        header {
+            text-align: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin: 0;
+            font-weight: 600;
+        }
+
+        p {
+            font-size: 1rem;
+            margin: 10px 0 0;
+            font-weight: 300;
+        }
+
+        #weatherApp {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+
+        input[type="text"] {
+            padding: 10px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 5px;
+            width: 80%;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        input[type="text"]::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            background: #ff6f61;
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background: #ff3b2f;
+        }
+
+        #loading {
+            display: none;
+            font-size: 1.2rem;
+            margin: 20px 0;
+        }
+
+        #weatherResult {
+            margin-top: 20px;
+            display: none;
+            animation: fadeIn 1s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        #weatherIcon {
+            width: 80px;
+            height: 80px;
+            margin: 10px 0;
+        }
+
+        .temperature {
+            font-size: 3rem;
+            font-weight: 600;
+            margin: 10px 0;
+        }
+
+        .details {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+        }
+
+        .details p {
+            margin: 0;
+            font-size: 1rem;
+        }
+
+        #map {
+            height: 300px;
+            width: 100%;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        footer a {
+            color: #ff6f61;
+            text-decoration: none;
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            #weatherApp {
+                padding: 15px;
+            }
+
+            input[type="text"] {
+                width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Modern Weather App</h1>
+        <p>Live updates, real-time insights.</p>
+    </header>
+
+    <div id="weatherApp">
+        <input type="text" id="city" placeholder="Enter city">
+        <button onclick="getWeather()">Get Weather</button>
+        <button onclick="getCurrentLocation()">Use My Location</button>
+
+        <div id="loading">Loading weather data...</div>
+
+        <div id="weatherResult">
+            <h2 id="cityName"></h2>
+            <img id="weatherIcon" alt="Weather Icon">
+            <p class="temperature" id="temperature"></p>
+            <div class="details">
+                <p id="description"></p>
+                <p id="humidity"></p>
+                <p id="wind"></p>
+            </div>
+        </div>
+
+        <div id="map"></div>
+    </div>
+
+    <footer>
+        <p>Made with ❤️ by <a href="#" target="_blank">Your Name</a></p>
+    </footer>
+
+    <script>
+        const apiKey = 'ee15a32235604254345f2db966a34d38'; // Replace with your OpenWeatherMap API key
+        let map;
+
+        // Initialize the map
+        function initMap() {
+            map = L.map('map').setView([0, 0], 2);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+        }
+
+        // Update the map with weather layers
+        function updateMap(latitude, longitude) {
+            map.setView([latitude, longitude], 10);
+            L.tileLayer(`https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=${apiKey}`).addTo(map);
+        }
+
+        function displayWeather(data) {
+            const weatherResult = document.getElementById('weatherResult');
+            document.getElementById('cityName').textContent = `Weather in ${data.name}`;
+            document.getElementById('temperature').textContent = `${data.main.temp} °C`;
+            document.getElementById('description').textContent = `Description: ${data.weather[0].description}`;
+            document.getElementById('humidity').textContent = `Humidity: ${data.main.humidity}%`;
+            document.getElementById('wind').textContent = `Wind Speed: ${data.wind.speed} m/s`;
+            document.getElementById('weatherIcon').src = `http://openweathermap.org/img/wn/${data.weather[0].icon}.png`;
+            weatherResult.style.display = 'block';
+
+            // Update dynamic background
+            setDynamicBackground(data.weather[0].main.toLowerCase());
+
+            // Update the map
+            updateMap(data.coord.lat, data.coord.lon);
+        }
+
+        function getWeather() {
+            const city = document.getElementById('city').value;
+            if (!city) {
+                alert('Please enter a city name.');
+                return;
+            }
+
+            const apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`;
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('weatherResult').style.display = 'none';
+
+            fetch(apiUrl)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('loading').style.display = 'none';
+                    if (data.cod === 200) {
+                        displayWeather(data);
+                    } else {
+                        alert('City not found. Please try again.');
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('loading').style.display = 'none';
+                    alert('Error fetching weather data. Please try again later.');
+                });
+        }
+
+        function getCurrentLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(position => {
+                    const { latitude, longitude } = position.coords;
+                    const apiUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${apiKey}&units=metric`;
+
+                    document.getElementById('loading').style.display = 'block';
+                    document.getElementById('weatherResult').style.display = 'none';
+
+                    fetch(apiUrl)
+                        .then(response => response.json())
+                        .then(data => {
+                            document.getElementById('loading').style.display = 'none';
+                            displayWeather(data);
+                        })
+                        .catch(error => {
+                            document.getElementById('loading').style.display = 'none';
+                            alert('Error fetching weather data. Please try again later.');
+                        });
+                });
+            } else {
+                alert('Geolocation is not supported by your browser.');
+            }
+        }
+
+        function setDynamicBackground(condition) {
+            const body = document.body;
+            if (condition.includes('clear')) {
+                body.style.background = "linear-gradient(135deg, #87CEEB, #1E90FF)";
+            } else if (condition.includes('cloud')) {
+                body.style.background = "linear-gradient(135deg, #B0C4DE, #778899)";
+            } else if (condition.includes('rain')) {
+                body.style.background = "linear-gradient(135deg, #4682B4, #2F4F4F)";
+            } else {
+                body.style.background = "linear-gradient(135deg, #1e3c72, #2a5298)";
+            }
+        }
+
+        // Auto-refresh weather data every 5 minutes
+        setInterval(getWeather, 300000);
+
+        // Initialize map on page load
+        window.onload = initMap;
+    </script>
+</body>
+</html>
